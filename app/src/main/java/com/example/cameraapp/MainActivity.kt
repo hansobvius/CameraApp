@@ -27,6 +27,7 @@ private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
 class MainActivity : AppCompatActivity(), LifecycleOwner {
 
     private val executor = Executors.newSingleThreadExecutor()
+    private val luminosityAnalyzer = LuminosityAnalyzer()
     private lateinit var viewFinder: TextureView
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -117,7 +118,7 @@ class MainActivity : AppCompatActivity(), LifecycleOwner {
         }.build()
 
         val analyzerUseCase = ImageAnalysis(analyzerConfig).apply{
-            setAnalyzer(executor, LuminosityAnalyzer())
+            setAnalyzer(executor, luminosityAnalyzer)
         }
 
         CameraX.bindToLifecycle(this, preview, imageCapture, analyzerUseCase)
