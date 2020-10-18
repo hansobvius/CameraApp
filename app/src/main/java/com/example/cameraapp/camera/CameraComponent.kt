@@ -9,25 +9,29 @@ import android.view.Surface
 import android.view.TextureView
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.camera.core.CameraX
-import androidx.camera.core.Preview
-import androidx.camera.core.PreviewConfig
+import androidx.camera.core.*
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LifecycleOwner
+import java.util.concurrent.Executors
 
 open class CameraComponent<BINDING>: Fragment(), CameraImplementation, LifecycleOwner
         where BINDING: androidx.databinding.ViewDataBinding{
 
     private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
+    private val executor = Executors.newSingleThreadExecutor()
     private var isGranted: Boolean = false
     private var viewFinder: TextureView? = null
+    private var imageCapture: ImageCapture? = null
+    private var analyzerUseCase: ImageAnalysis? = null
     private var mContext: Context? = null
 
     open fun initViewFinder(view: TextureView, context: Context){
         this.viewFinder = view
         this.mContext = context
+        this.imageCapture()
+        this.imageAnalyzer()
         viewFinder.apply{
             when{
                 allPermissionsGranted() ->  this!!.post{openCamera()}
@@ -77,9 +81,25 @@ open class CameraComponent<BINDING>: Fragment(), CameraImplementation, Lifecycle
             }
         }
 
-        // FIXME - npe on usesCaseBind
         this@CameraComponent.let{
-            CameraX.bindToLifecycle(this, preview)
+            CameraX.bindToLifecycle(this, preview, imageCapture, analyzerUseCase)
+        }
+    }
+
+    override fun imageCapture() {
+        val imageCaptureConfig = ImageCaptureConfig.Builder().apply{
+            setCaptureMode(ImageCapture.CaptureMode.MIN_LATENCY)
+        }.build()
+        this.imageCapture = ImageCapture(imageCaptureConfig)
+    }
+
+    override fun imageAnalyzer() {
+        val analyzerConfig = ImageAnalysisConfig.Builder().apply{
+            setImageReaderMode(ImageAnalysis.ImageReaderMode.ACQUIRE_LATEST_IMAGE)
+        }.build()
+
+        this.analyzerUseCase = ImageAnalysis(analyzerConfig).apply{
+            setAnalyzer(executor, LuminosityAnalyzer())
         }
     }
 
