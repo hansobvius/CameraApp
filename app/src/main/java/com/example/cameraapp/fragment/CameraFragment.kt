@@ -1,13 +1,14 @@
-package com.example.cameraapp
+package com.example.cameraapp.fragment
 
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.fragment.app.Fragment
+import androidx.lifecycle.LifecycleOwner
+import com.example.cameraapp.camera.CameraComponent
 import com.example.cameraapp.databinding.FragmentCameraBinding
 
-class CameraFragment: CameraComponent() {
+class CameraFragment: CameraComponent<FragmentCameraBinding>(), LifecycleOwner {
 
     private var binding: FragmentCameraBinding? = null
 
@@ -16,6 +17,13 @@ class CameraFragment: CameraComponent() {
             this.lifecycleOwner = this@CameraFragment
         }
         return binding!!.root
+    }
+
+    override fun onStart(){
+        super.onStart()
+        binding?.let{ view ->
+            initViewFinder(view.fragmentTextureView, this.requireContext())
+        }
     }
 
     override fun onDestroy() {
