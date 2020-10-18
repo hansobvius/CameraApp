@@ -7,4 +7,6 @@ interface CameraImplementation {
     fun imageCapture()
 
     fun imageAnalyzer()
+
+    fun takePicture()
 }

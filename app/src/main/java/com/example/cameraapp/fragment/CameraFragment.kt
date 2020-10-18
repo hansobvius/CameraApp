@@ -26,8 +26,17 @@ class CameraFragment: CameraComponent<FragmentCameraBinding>(), LifecycleOwner {
         }
     }
 
+    override fun onResume(){
+        super.onResume()
+        this.initCameraActions()
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         binding = null
+    }
+
+    private fun initCameraActions(){
+        binding!!.captureButton.setOnClickListener { takePicture() }
     }
 }

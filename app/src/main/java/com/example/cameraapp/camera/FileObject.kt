@@ -5,7 +5,8 @@ import java.io.File
 
 object FileObject {
 
-    fun inputWrite(context: Context){
-        val file = File(context.cacheDir, "")
+    fun inputWrite(context: Context, path: String): File{
+        val file = File(context.externalMediaDirs.first(), path)
+        return file
     }
 }

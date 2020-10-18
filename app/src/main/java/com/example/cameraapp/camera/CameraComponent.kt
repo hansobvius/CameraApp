@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Matrix
+import android.util.Log
 import android.util.Size
 import android.view.Surface
 import android.view.TextureView
@@ -14,6 +15,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LifecycleOwner
+import java.io.File
 import java.util.concurrent.Executors
 
 open class CameraComponent<BINDING>: Fragment(), CameraImplementation, LifecycleOwner
@@ -101,6 +103,31 @@ open class CameraComponent<BINDING>: Fragment(), CameraImplementation, Lifecycle
         this.analyzerUseCase = ImageAnalysis(analyzerConfig).apply{
             setAnalyzer(executor, LuminosityAnalyzer())
         }
+    }
+
+    override fun takePicture(){
+        val file = FileObject.inputWrite(mContext!!, "${System.currentTimeMillis()}.jpg")
+        imageCapture!!.takePicture(file, executor, object : ImageCapture.OnImageSavedListener {
+
+                override fun onError(
+                    imageCaptureError: ImageCapture.ImageCaptureError,
+                    message: String,
+                    exc: Throwable?) {
+                    val msg = "Photo capture failed: $message"
+                    Log.e("CameraXApp", msg, exc)
+                    viewFinder!!.post {
+                        Toast.makeText(mContext, msg, Toast.LENGTH_SHORT).show()
+                    }
+                }
+
+                override fun onImageSaved(file: File) {
+                    val msg = "Photo capture succeeded: ${file.absolutePath}"
+                    Log.d("CameraXApp", msg)
+                    viewFinder!!.post {
+                        Toast.makeText(mContext, msg, Toast.LENGTH_SHORT).show()
+                    }
+                }
+            })
     }
 
     private fun updateTransform(viewFinder: TextureView){
