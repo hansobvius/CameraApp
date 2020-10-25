@@ -106,7 +106,7 @@ open class CameraComponent<BINDING>: Fragment(), CameraImplementation, Lifecycle
     }
 
     override fun takePicture(){
-        val file = FileObject.inputWrite(mContext!!, "${System.currentTimeMillis()}.jpg")
+        val file = FileObject.createFile(mContext!!, "${System.currentTimeMillis()}.jpg")
         imageCapture!!.takePicture(file, executor, object : ImageCapture.OnImageSavedListener {
 
                 override fun onError(
