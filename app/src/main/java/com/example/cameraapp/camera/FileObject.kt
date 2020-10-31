@@ -5,10 +5,8 @@ import java.io.File
 
 object FileObject {
 
-    fun createFile(context: Context, path: String): File{
-        val file = File(context.externalMediaDirs.first(), path)
-        return file
-    }
+    fun createFile(context: Context, path: String): File
+        = File(context.externalMediaDirs.first(), path)
 
     fun getFile(): String?{
         return null

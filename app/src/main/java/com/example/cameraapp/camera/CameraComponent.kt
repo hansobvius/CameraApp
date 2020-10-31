@@ -66,6 +66,9 @@ open class CameraComponent<BINDING>: Fragment(), CameraImplementation, Lifecycle
         ContextCompat.checkSelfPermission(mContext!!, it) == PackageManager.PERMISSION_GRANTED
     }
 
+    /**
+     * Preview Image
+     */
     override fun openCamera(){
         val previewConfig = PreviewConfig.Builder().apply{
             setTargetResolution(Size(640, 480))
@@ -95,6 +98,9 @@ open class CameraComponent<BINDING>: Fragment(), CameraImplementation, Lifecycle
         this.imageCapture = ImageCapture(imageCaptureConfig)
     }
 
+    /**
+     * Image Analyzes
+     */
     override fun imageAnalyzer() {
         val analyzerConfig = ImageAnalysisConfig.Builder().apply{
             setImageReaderMode(ImageAnalysis.ImageReaderMode.ACQUIRE_LATEST_IMAGE)
@@ -105,6 +111,9 @@ open class CameraComponent<BINDING>: Fragment(), CameraImplementation, Lifecycle
         }
     }
 
+    /**
+     * Take picture
+     */
     override fun takePicture(){
         val file = FileObject.createFile(mContext!!, "${System.currentTimeMillis()}.jpg")
         imageCapture!!.takePicture(file, executor, object : ImageCapture.OnImageSavedListener {
