@@ -1,6 +1,7 @@
 package com.thiagodev.camera
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Matrix
@@ -16,18 +17,21 @@ import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LifecycleOwner
 import java.io.File
+import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
+@SuppressLint("RestrictedApi")
 abstract class CameraXComponent<B>(): Fragment(), CameraImplementation, LifecycleOwner
         where B: ViewDataBinding{
 
-    private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
-    private val executor = Executors.newSingleThreadExecutor()
+    private var executor: ExecutorService? = null
     private var isGranted: Boolean = false
     private var viewFinder: TextureView? = null
+    private var preview: Preview? = null
     private var imageCapture: ImageCapture? = null
     private var analyzerUseCase: ImageAnalysis? = null
     private var mContext: Context? = null
+    private var bitLens: Boolean = true
 
     open lateinit var binding: B
 
@@ -40,16 +44,14 @@ abstract class CameraXComponent<B>(): Fragment(), CameraImplementation, Lifecycl
         return binding.root
     }
 
+    @SuppressLint("RestrictedApi")
     open fun initViewFinder(view: TextureView, context: Context){
         this.viewFinder = view
         this.mContext = context
-        this.imageCapture()
-        this.imageAnalyzer()
         viewFinder.apply{
             when{
-                allPermissionsGranted() ->  this!!.post{openCamera()}
-                else -> ActivityCompat.requestPermissions(
-                        this@CameraXComponent.activity!!, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
+                allPermissionsGranted() -> this!!.post{openCamera()}
+                else -> ActivityCompat.requestPermissions(this@CameraXComponent.activity!!, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
                 )
             }
 
@@ -81,6 +83,12 @@ abstract class CameraXComponent<B>(): Fragment(), CameraImplementation, Lifecycl
      * Preview Image
      */
     override fun openCamera(){
+        CameraX.isInitialized().apply {
+            if(this) CameraX.unbindAll()
+        }
+        this.initializeExecutor()
+        this.imageCapture()
+        this.imageAnalyzer()
         val previewConfig = PreviewConfig.Builder().apply{
             setTargetResolution(Size(
                 (binding as ViewDataBinding).root.width,
@@ -88,19 +96,20 @@ abstract class CameraXComponent<B>(): Fragment(), CameraImplementation, Lifecycl
             )
         }.build()
 
-        val preview = Preview(previewConfig)
-
-        preview.setOnPreviewOutputUpdateListener{
-            viewFinder?.let{ view ->
-                val parent = view.parent as ViewGroup
-                parent.removeView(view)
-                parent.addView(view, 0)
-                view.setSurfaceTexture(it.surfaceTexture)
-                updateTransform(view)
+        preview = Preview(previewConfig).also {
+            it.setOnPreviewOutputUpdateListener{
+                viewFinder?.let{ view ->
+                    val parent = view.parent as ViewGroup
+                    parent.removeView(view)
+                    parent.addView(view, 0)
+                    view.setSurfaceTexture(it.surfaceTexture)
+                    updateTransform(view)
+                }
             }
         }
 
         this@CameraXComponent.let{
+            CameraX.getCameraWithLensFacing(getCameraOfChoice())
             CameraX.bindToLifecycle(this, preview, imageCapture, analyzerUseCase)
         }
     }
@@ -114,7 +123,7 @@ abstract class CameraXComponent<B>(): Fragment(), CameraImplementation, Lifecycl
         }.build()
 
         this.analyzerUseCase = ImageAnalysis(analyzerConfig).apply{
-            setAnalyzer(executor, LuminosityAnalyzer())
+            setAnalyzer(executor!!, LuminosityAnalyzer())
         }
     }
 
@@ -123,7 +132,8 @@ abstract class CameraXComponent<B>(): Fragment(), CameraImplementation, Lifecycl
      */
     override fun takePicture(){
         val file = FileObject.createFile(mContext!!, "${System.currentTimeMillis()}.jpg")
-        imageCapture!!.takePicture(file, executor, object : ImageCapture.OnImageSavedListener {
+
+        imageCapture!!.takePicture(file, executor!!, object : ImageCapture.OnImageSavedListener {
 
                 override fun onError(
                     imageCaptureError: ImageCapture.ImageCaptureError,
@@ -172,7 +182,28 @@ abstract class CameraXComponent<B>(): Fragment(), CameraImplementation, Lifecycl
         viewFinder.setTransform(matrix)
     }
 
+    fun flipCamera(){
+        bitLens = !bitLens
+        executor!!.shutdownNow()
+        openCamera()
+    }
+
+    private fun initializeExecutor() {
+        executor = Executors.newSingleThreadExecutor()
+    }
+
+    private fun getCameraOfChoice(): CameraX.LensFacing{
+        var lens: CameraX.LensFacing? = null
+        if(bitLens){
+            lens = CameraX.LensFacing.FRONT
+        }else{
+            lens = CameraX.LensFacing.BACK
+        }
+        return lens
+    }
+
     companion object{
         private const val REQUEST_CODE_PERMISSIONS = 10
+        private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
     }
 }
