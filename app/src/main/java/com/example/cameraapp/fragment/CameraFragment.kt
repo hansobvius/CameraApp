@@ -48,9 +48,10 @@ class CameraFragment: CameraXComponent<FragmentCameraBinding>(), LifecycleOwner 
     }
 
     private fun initCameraActions(){
-        binding.captureButton.setOnClickListener {
-            Log.i("TEST", "clicked")
-            takePicture()
+        binding.apply{
+            captureButton.setOnClickListener { takePicture() }
+            cameraButton.setOnClickListener{ flipCamera() }
         }
+
     }
 }
