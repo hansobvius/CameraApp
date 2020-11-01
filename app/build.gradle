@@ -35,6 +35,8 @@ android {
 
 dependencies {
 
+    implementation project(":camera")
+
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation"org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation "androidx.appcompat:appcompat:$appcompat_version"
@@ -43,11 +45,13 @@ dependencies {
     // ConstraintLayout
     implementation "androidx.constraintlayout:constraintlayout:$constraint_version"
 
-    // Camera X
-    implementation "androidx.camera:camera-core:$camerax_version"
+    def camerax_version = "1.0.0-beta03"
+// CameraX core library using camera2 implementation
     implementation "androidx.camera:camera-camera2:$camerax_version"
+// CameraX Lifecycle Library
     implementation "androidx.camera:camera-lifecycle:$camerax_version"
-    implementation "androidx.camera:camera-view:$camerax_view_version"
+// CameraX View class
+    implementation "androidx.camera:camera-view:1.0.0-alpha10"
 
     // Navigation
     implementation "androidx.navigation:navigation-fragment-ktx:$navigation_version"

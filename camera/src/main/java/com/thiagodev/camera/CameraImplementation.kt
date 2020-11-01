@@ -1,4 +1,4 @@
-package com.example.cameraapp.camera
+package com.thiagodev.camera
 
 interface CameraImplementation {
 
