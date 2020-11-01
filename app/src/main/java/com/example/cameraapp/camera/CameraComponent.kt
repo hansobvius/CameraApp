@@ -4,22 +4,23 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Matrix
+import android.os.Bundle
 import android.util.Log
 import android.util.Size
-import android.view.Surface
-import android.view.TextureView
-import android.view.ViewGroup
+import android.view.*
 import android.widget.Toast
 import androidx.camera.core.*
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LifecycleOwner
+import com.example.cameraapp.databinding.FragmentCameraBindingImpl
 import java.io.File
 import java.util.concurrent.Executors
 
-open class CameraComponent<BINDING>: Fragment(), CameraImplementation, LifecycleOwner
-        where BINDING: androidx.databinding.ViewDataBinding{
+abstract class CameraComponent<B>(): Fragment(), CameraImplementation, LifecycleOwner
+        where B: ViewDataBinding{
 
     private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
     private val executor = Executors.newSingleThreadExecutor()
@@ -28,6 +29,17 @@ open class CameraComponent<BINDING>: Fragment(), CameraImplementation, Lifecycle
     private var imageCapture: ImageCapture? = null
     private var analyzerUseCase: ImageAnalysis? = null
     private var mContext: Context? = null
+
+    internal lateinit var binding: B
+
+    abstract fun getBinding(): B
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        binding = getBinding().apply {
+            this.lifecycleOwner
+        }
+        return binding.root
+    }
 
     open fun initViewFinder(view: TextureView, context: Context){
         this.viewFinder = view
@@ -71,7 +83,10 @@ open class CameraComponent<BINDING>: Fragment(), CameraImplementation, Lifecycle
      */
     override fun openCamera(){
         val previewConfig = PreviewConfig.Builder().apply{
-            setTargetResolution(Size(640, 480))
+            setTargetResolution(Size(
+                (binding as ViewDataBinding).root.width,
+                (binding as ViewDataBinding).root.height)
+            )
         }.build()
 
         val preview = Preview(previewConfig)

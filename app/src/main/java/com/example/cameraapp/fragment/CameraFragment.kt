@@ -1,6 +1,7 @@
 package com.example.cameraapp.fragment
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -15,19 +16,19 @@ import com.example.cameraapp.viewModel.CameraViewModel
 class CameraFragment: CameraComponent<FragmentCameraBinding>(), LifecycleOwner {
 
     private lateinit var viewModel: CameraViewModel
-    private var binding: FragmentCameraBinding? = null
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+    override fun getBinding() = FragmentCameraBinding.inflate(LayoutInflater.from(this.requireActivity())).apply{
+        this.lifecycleOwner = this@CameraFragment
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         viewModel = ViewModelProvider(requireActivity()).get(CameraViewModel::class.java)
-        binding = FragmentCameraBinding.inflate(inflater).apply{
-            this.lifecycleOwner = this@CameraFragment
-        }
-        return binding!!.root
     }
 
     override fun onStart(){
         super.onStart()
-        binding?.let{ view ->
+        binding.let{ view ->
             initViewFinder(view.fragmentTextureView, this.requireContext())
         }
     }
@@ -40,13 +41,8 @@ class CameraFragment: CameraComponent<FragmentCameraBinding>(), LifecycleOwner {
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        binding = null
-    }
-
     private fun observerEvents(){
-        viewModel.viewModelFile.observe(this, Observer {
+        viewModel!!.viewModelFile.observe(this, Observer {
             it?.let{
                 binding.apply{
 
@@ -56,6 +52,9 @@ class CameraFragment: CameraComponent<FragmentCameraBinding>(), LifecycleOwner {
     }
 
     private fun initCameraActions(){
-        binding!!.captureButton.setOnClickListener { takePicture() }
+        binding.captureButton.setOnClickListener {
+            Log.i("TEST", "clicked")
+            takePicture()
+        }
     }
 }
