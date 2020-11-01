@@ -135,10 +135,7 @@ abstract class CameraXComponent<B>(): Fragment(), CameraImplementation, Lifecycl
 
         imageCapture!!.takePicture(file, executor!!, object : ImageCapture.OnImageSavedListener {
 
-                override fun onError(
-                    imageCaptureError: ImageCapture.ImageCaptureError,
-                    message: String,
-                    exc: Throwable?) {
+                override fun onError(imageCaptureError: ImageCapture.ImageCaptureError, message: String, exc: Throwable?) {
                     val msg = "Photo capture failed: $message"
                     Log.e("CameraXApp", msg, exc)
                     viewFinder!!.post {
@@ -192,15 +189,10 @@ abstract class CameraXComponent<B>(): Fragment(), CameraImplementation, Lifecycl
         executor = Executors.newSingleThreadExecutor()
     }
 
-    private fun getCameraOfChoice(): CameraX.LensFacing{
-        var lens: CameraX.LensFacing? = null
-        if(bitLens){
-            lens = CameraX.LensFacing.FRONT
-        }else{
-            lens = CameraX.LensFacing.BACK
-        }
-        return lens
-    }
+    private fun getCameraOfChoice(): CameraX.LensFacing =
+        if(!bitLens) CameraX.LensFacing.FRONT
+        else CameraX.LensFacing.BACK
+
 
     companion object{
         private const val REQUEST_CODE_PERMISSIONS = 10
