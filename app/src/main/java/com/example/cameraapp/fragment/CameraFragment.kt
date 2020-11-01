@@ -17,9 +17,7 @@ class CameraFragment: CameraComponent<FragmentCameraBinding>(), LifecycleOwner {
 
     private lateinit var viewModel: CameraViewModel
 
-    override fun getBinding() = FragmentCameraBinding.inflate(LayoutInflater.from(this.requireActivity())).apply{
-        this.lifecycleOwner = this@CameraFragment
-    }
+    override fun getBinding() = FragmentCameraBinding.inflate(LayoutInflater.from(this.requireActivity()))
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
