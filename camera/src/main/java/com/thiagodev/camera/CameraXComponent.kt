@@ -106,6 +106,34 @@ abstract class CameraXComponent<B>(): Fragment(), CameraImplementation, Lifecycl
     }
 
     /**
+     * Take picture
+     */
+    override fun takePicture(){
+        val file = FileObject.createFile(mContext!!, "${System.currentTimeMillis()}.jpg")
+        imageCapture!!.takePicture(file, executor, object : ImageCapture.OnImageSavedListener {
+
+            override fun onError(
+                imageCaptureError: ImageCapture.ImageCaptureError,
+                message: String,
+                exc: Throwable?) {
+                val msg = "Photo capture failed: $message"
+                Log.e("CameraXApp", msg, exc)
+                viewFinder!!.post {
+                    Toast.makeText(mContext, msg, Toast.LENGTH_SHORT).show()
+                }
+            }
+
+            override fun onImageSaved(file: File) {
+                val msg = "Photo capture succeeded: ${file.absolutePath}"
+                Log.d("CameraXApp", msg)
+                viewFinder!!.post {
+                    Toast.makeText(mContext, msg, Toast.LENGTH_SHORT).show()
+                }
+            }
+        })
+    }
+
+    /**
      * Image Analyzes
      */
     override fun imageAnalyzer() {
@@ -116,34 +144,6 @@ abstract class CameraXComponent<B>(): Fragment(), CameraImplementation, Lifecycl
         this.analyzerUseCase = ImageAnalysis(analyzerConfig).apply{
             setAnalyzer(executor, LuminosityAnalyzer())
         }
-    }
-
-    /**
-     * Take picture
-     */
-    override fun takePicture(){
-        val file = FileObject.createFile(mContext!!, "${System.currentTimeMillis()}.jpg")
-        imageCapture!!.takePicture(file, executor, object : ImageCapture.OnImageSavedListener {
-
-                override fun onError(
-                    imageCaptureError: ImageCapture.ImageCaptureError,
-                    message: String,
-                    exc: Throwable?) {
-                    val msg = "Photo capture failed: $message"
-                    Log.e("CameraXApp", msg, exc)
-                    viewFinder!!.post {
-                        Toast.makeText(mContext, msg, Toast.LENGTH_SHORT).show()
-                    }
-                }
-
-                override fun onImageSaved(file: File) {
-                    val msg = "Photo capture succeeded: ${file.absolutePath}"
-                    Log.d("CameraXApp", msg)
-                    viewFinder!!.post {
-                        Toast.makeText(mContext, msg, Toast.LENGTH_SHORT).show()
-                    }
-                }
-            })
     }
 
     override fun imageCapture() {
