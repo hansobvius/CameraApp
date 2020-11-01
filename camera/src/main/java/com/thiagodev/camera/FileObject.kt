@@ -1,4 +1,4 @@
-package com.example.cameraapp.camera
+package com.thiagodev.camera
 
 import android.content.Context
 import java.io.File

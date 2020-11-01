@@ -1,4 +1,4 @@
-package com.example.cameraapp.camera
+package com.thiagodev.camera
 
 import android.Manifest
 import android.content.Context
@@ -15,11 +15,10 @@ import androidx.core.content.ContextCompat
 import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LifecycleOwner
-import com.example.cameraapp.databinding.FragmentCameraBindingImpl
 import java.io.File
 import java.util.concurrent.Executors
 
-abstract class CameraComponent<B>(): Fragment(), CameraImplementation, LifecycleOwner
+abstract class CameraXComponent<B>(): Fragment(), CameraImplementation, LifecycleOwner
         where B: ViewDataBinding{
 
     private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
@@ -30,12 +29,12 @@ abstract class CameraComponent<B>(): Fragment(), CameraImplementation, Lifecycle
     private var analyzerUseCase: ImageAnalysis? = null
     private var mContext: Context? = null
 
-    internal lateinit var binding: B
+    open lateinit var binding: B
 
-    abstract fun getBinding(): B
+    abstract fun getViewBinding(): B
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        binding = getBinding().apply {
+        binding = getViewBinding().apply {
             this.lifecycleOwner
         }
         return binding.root
@@ -50,7 +49,7 @@ abstract class CameraComponent<B>(): Fragment(), CameraImplementation, Lifecycle
             when{
                 allPermissionsGranted() ->  this!!.post{openCamera()}
                 else -> ActivityCompat.requestPermissions(
-                        this@CameraComponent.activity!!, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
+                        this@CameraXComponent.activity!!, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
                 )
             }
 
@@ -96,21 +95,14 @@ abstract class CameraComponent<B>(): Fragment(), CameraImplementation, Lifecycle
                 val parent = view.parent as ViewGroup
                 parent.removeView(view)
                 parent.addView(view, 0)
-                view.surfaceTexture = it.surfaceTexture
+                view.setSurfaceTexture(it.surfaceTexture)
                 updateTransform(view)
             }
         }
 
-        this@CameraComponent.let{
+        this@CameraXComponent.let{
             CameraX.bindToLifecycle(this, preview, imageCapture, analyzerUseCase)
         }
-    }
-
-    override fun imageCapture() {
-        val imageCaptureConfig = ImageCaptureConfig.Builder().apply{
-            setCaptureMode(ImageCapture.CaptureMode.MIN_LATENCY)
-        }.build()
-        this.imageCapture = ImageCapture(imageCaptureConfig)
     }
 
     /**
@@ -152,6 +144,13 @@ abstract class CameraComponent<B>(): Fragment(), CameraImplementation, Lifecycle
                     }
                 }
             })
+    }
+
+    override fun imageCapture() {
+        val imageCaptureConfig = ImageCaptureConfig.Builder().apply{
+            setCaptureMode(ImageCapture.CaptureMode.MIN_LATENCY)
+        }.build()
+        this.imageCapture = ImageCapture(imageCaptureConfig)
     }
 
     private fun updateTransform(viewFinder: TextureView){

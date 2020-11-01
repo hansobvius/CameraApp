@@ -1,4 +1,4 @@
-package com.example.cameraapp.camera
+package com.thiagodev.camera
 
 import android.util.Log
 import androidx.camera.core.ImageAnalysis
