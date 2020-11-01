@@ -38,7 +38,7 @@ open class CameraComponent<BINDING>: Fragment(), CameraImplementation, Lifecycle
             when{
                 allPermissionsGranted() ->  this!!.post{openCamera()}
                 else -> ActivityCompat.requestPermissions(
-                        this@CameraComponent.activity!!, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
+                    this@CameraComponent.activity!!, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
                 )
             }
 
