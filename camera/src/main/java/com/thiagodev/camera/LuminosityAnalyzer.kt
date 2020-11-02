@@ -26,6 +26,7 @@ class LuminosityAnalyzer(private val listener: LumaListener) : ImageAnalysis.Ana
             val pixels = data.map { it.toInt() and 0xFF }
             val luma = pixels.average()
             Log.d("CameraXApp", "Average luminosity: $luma")
+            listener(luma)
             lastAnalyzedTimestamp = currentTimestamp
         }
     }

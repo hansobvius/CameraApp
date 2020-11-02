@@ -43,7 +43,7 @@ class CameraFragment: CameraXComponent<FragmentCameraBinding>(), LifecycleOwner 
         viewModel.viewModelFile.observe(this, Observer {
             it?.let{
                 binding.apply{
-
+                    binding.previewBottomImage.setImageBitmap(it)
                 }
             }
         })
@@ -51,13 +51,17 @@ class CameraFragment: CameraXComponent<FragmentCameraBinding>(), LifecycleOwner 
 
     private fun initCameraActions(){
         binding.apply{
-            captureButton.setOnClickListener { takePicture() }
+            captureButton.setOnClickListener { takePicture {
+                it.let{
+                    viewModel.getFileImage(it, resources.getString(R.string.app_name))
+                }
+            }}
             cameraButton.setOnClickListener{ flipCamera() }
         }
     }
 
-    fun getOutputDirectory(): File {
-        val mediaDir = this.requireContext().externalMediaDirs.firstOrNull()?.let {
+    private fun getOutputDirectory(): File {
+        val mediaDir = this.requireActivity().externalMediaDirs.firstOrNull()?.let {
             File(it, resources.getString(R.string.app_name)).apply { mkdirs() } }
         return if (mediaDir != null && mediaDir.exists())
             mediaDir else this.requireContext().filesDir
