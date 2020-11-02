@@ -86,7 +86,6 @@ class CameraxActivity : AppCompatActivity() {
             imageCapture = ImageCapture.Builder().build()
 
 
-
             // Analyzes
             imageAnalyzer = ImageAnalysis.Builder()
                 .build()
@@ -151,6 +150,7 @@ class CameraxActivity : AppCompatActivity() {
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all {
         ContextCompat.checkSelfPermission(baseContext, it) == PackageManager.PERMISSION_GRANTED
     }
+
 
     fun getOutputDirectory(): File {
         val mediaDir = externalMediaDirs.firstOrNull()?.let {

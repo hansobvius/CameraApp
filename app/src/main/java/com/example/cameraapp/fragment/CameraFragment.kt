@@ -7,9 +7,11 @@ import android.view.View
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
+import com.example.cameraapp.R
 import com.example.cameraapp.databinding.FragmentCameraBinding
 import com.example.cameraapp.viewModel.CameraViewModel
 import com.thiagodev.camera.CameraXComponent
+import java.io.File
 
 class CameraFragment: CameraXComponent<FragmentCameraBinding>(), LifecycleOwner {
 
@@ -25,7 +27,7 @@ class CameraFragment: CameraXComponent<FragmentCameraBinding>(), LifecycleOwner 
     override fun onStart(){
         super.onStart()
         binding.let{ view ->
-            initViewFinder(view.fragmentTextureView, this.requireContext())
+            initViewFinder(view.fragmentTextureView, this.requireContext(), getOutputDirectory())
         }
     }
 
@@ -52,6 +54,12 @@ class CameraFragment: CameraXComponent<FragmentCameraBinding>(), LifecycleOwner 
             captureButton.setOnClickListener { takePicture() }
             cameraButton.setOnClickListener{ flipCamera() }
         }
+    }
 
+    fun getOutputDirectory(): File {
+        val mediaDir = this.requireContext().externalMediaDirs.firstOrNull()?.let {
+            File(it, resources.getString(R.string.app_name)).apply { mkdirs() } }
+        return if (mediaDir != null && mediaDir.exists())
+            mediaDir else this.requireContext().filesDir
     }
 }

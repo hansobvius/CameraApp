@@ -6,7 +6,7 @@ import androidx.camera.core.ImageProxy
 import java.nio.ByteBuffer
 import java.util.concurrent.TimeUnit
 
-class LuminosityAnalyzer : ImageAnalysis.Analyzer {
+class LuminosityAnalyzer(private val listener: LumaListener) : ImageAnalysis.Analyzer {
 
     private var lastAnalyzedTimestamp = 0L
 
@@ -17,7 +17,7 @@ class LuminosityAnalyzer : ImageAnalysis.Analyzer {
         return data
     }
 
-    override fun analyze(image: ImageProxy, rotationDegrees: Int) {
+    override fun analyze(image: ImageProxy) {
         val currentTimestamp = System.currentTimeMillis()
         if (currentTimestamp - lastAnalyzedTimestamp >=
             TimeUnit.SECONDS.toMillis(1)) {

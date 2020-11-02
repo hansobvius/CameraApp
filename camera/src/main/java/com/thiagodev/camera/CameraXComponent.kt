@@ -5,33 +5,43 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Matrix
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.util.Size
 import android.view.*
 import android.widget.Toast
 import androidx.camera.core.*
+import androidx.camera.core.impl.ImageCaptureConfig.OPTION_FLASH_MODE
+import androidx.camera.lifecycle.ProcessCameraProvider
+import androidx.camera.view.PreviewView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LifecycleOwner
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+
+typealias LumaListener = (luma: Double) -> Unit
 
 @SuppressLint("RestrictedApi")
 abstract class CameraXComponent<B>(): Fragment(), CameraImplementation, LifecycleOwner
         where B: ViewDataBinding{
 
-    private var executor: ExecutorService? = null
-    private var isGranted: Boolean = false
-    private var viewFinder: TextureView? = null
+    private lateinit var mContext: Context
     private var preview: Preview? = null
     private var imageCapture: ImageCapture? = null
-    private var analyzerUseCase: ImageAnalysis? = null
-    private var mContext: Context? = null
-    private var bitLens: Boolean = true
+    private var imageAnalyzer: ImageAnalysis? = null
+    private var camera: Camera? = null
+
+    private var viewFinder: PreviewView? = null
+
+    private lateinit var outputDirectory: File
+    private lateinit var cameraExecutor: ExecutorService
 
     open lateinit var binding: B
 
@@ -44,120 +54,107 @@ abstract class CameraXComponent<B>(): Fragment(), CameraImplementation, Lifecycl
         return binding.root
     }
 
-    @SuppressLint("RestrictedApi")
-    open fun initViewFinder(view: TextureView, context: Context){
-        this.viewFinder = view
-        this.mContext = context
-        viewFinder.apply{
-            when{
-                allPermissionsGranted() -> this!!.post{openCamera()}
-                else -> ActivityCompat.requestPermissions(this@CameraXComponent.activity!!, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
-                )
-            }
-
-            this!!.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
-                updateTransform(this)
-            }
-        }
-    }
-
     override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if(requestCode == REQUEST_CODE_PERMISSIONS){
-            if(allPermissionsGranted()){
+        requestCode: Int, permissions: Array<String>, grantResults:
+        IntArray) {
+        if (requestCode == REQUEST_CODE_PERMISSIONS) {
+            if (allPermissionsGranted()) {
                 openCamera()
-            }else{
-                Toast.makeText(mContext, "Permission not granted", Toast.LENGTH_LONG).show()
+            } else {
+                Toast.makeText(this.requireContext(),
+                    "Permissions not granted by the user.",
+                    Toast.LENGTH_SHORT).show()
+                // TODO - resolve finish child operation
+                // this.finish()
             }
         }
     }
 
-    private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all{
-        ContextCompat.checkSelfPermission(mContext!!, it) == PackageManager.PERMISSION_GRANTED
+    @SuppressLint("RestrictedApi")
+    open fun initViewFinder(view: PreviewView, context: Context, file: File){
+        outputDirectory = file
+        this.mContext = context
+        this.viewFinder = view
+        when{
+            allPermissionsGranted() -> {openCamera()}
+            else -> ActivityCompat.requestPermissions(this@CameraXComponent.activity!!, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
+            )
+        }
     }
 
     /**
      * Preview Image
      */
     override fun openCamera(){
-        CameraX.isInitialized().apply {
-            if(this) CameraX.unbindAll()
-        }
         this.initializeExecutor()
         this.imageCapture()
         this.imageAnalyzer()
-        val previewConfig = PreviewConfig.Builder().apply{
-            setTargetResolution(Size(
-                (binding as ViewDataBinding).root.width,
-                (binding as ViewDataBinding).root.height)
-            )
-        }.build()
 
-        preview = Preview(previewConfig).also {
-            it.setOnPreviewOutputUpdateListener{
-                viewFinder?.let{ view ->
-                    val parent = view.parent as ViewGroup
-                    parent.removeView(view)
-                    parent.addView(view, 0)
-                    view.setSurfaceTexture(it.surfaceTexture)
-                    updateTransform(view)
-                }
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(mContext)
+
+        cameraProviderFuture.addListener(Runnable {
+            val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
+
+            preview = Preview.Builder().build()
+
+            val cameraSelector = CameraSelector.Builder().requireLensFacing(CameraSelector.LENS_FACING_BACK).build()
+
+            try {
+                cameraProvider.unbindAll()
+                camera = cameraProvider.bindToLifecycle(
+                    this, cameraSelector, preview, imageCapture, imageAnalyzer)
+
+                preview?.setSurfaceProvider(viewFinder!!.createSurfaceProvider(camera?.cameraInfo))
+            } catch(exc: Exception) {
+                Log.e(TAG, "Use case binding failed", exc)
             }
-        }
 
-        this@CameraXComponent.let{
-            CameraX.getCameraWithLensFacing(getCameraOfChoice())
-            CameraX.bindToLifecycle(this, preview, imageCapture, analyzerUseCase)
-        }
+        }, ContextCompat.getMainExecutor(mContext))
     }
 
     /**
      * Image Analyzes
      */
     override fun imageAnalyzer() {
-        val analyzerConfig = ImageAnalysisConfig.Builder().apply{
-            setImageReaderMode(ImageAnalysis.ImageReaderMode.ACQUIRE_LATEST_IMAGE)
-        }.build()
-
-        this.analyzerUseCase = ImageAnalysis(analyzerConfig).apply{
-            setAnalyzer(executor!!, LuminosityAnalyzer())
-        }
+        imageAnalyzer = ImageAnalysis.Builder()
+            .build()
+            .also {
+                it.setAnalyzer(cameraExecutor, LuminosityAnalyzer { luma ->
+                    Log.d(TAG, "Average luminosity: $luma")
+                })
+            }
     }
 
     /**
      * Take picture
      */
     override fun takePicture(){
-        val file = FileObject.createFile(mContext!!, "${System.currentTimeMillis()}.jpg")
+        val imageCapture = imageCapture ?: return
 
-        imageCapture!!.takePicture(file, executor!!, object : ImageCapture.OnImageSavedListener {
+        val photoFile = File(
+            outputDirectory,
+            SimpleDateFormat(FILENAME_FORMAT, Locale.US
+            ).format(System.currentTimeMillis()) + ".jpg")
 
-                override fun onError(imageCaptureError: ImageCapture.ImageCaptureError, message: String, exc: Throwable?) {
-                    val msg = "Photo capture failed: $message"
-                    Log.e("CameraXApp", msg, exc)
-                    viewFinder!!.post {
-                        Toast.makeText(mContext, msg, Toast.LENGTH_SHORT).show()
-                    }
+        val outputOptions = ImageCapture.OutputFileOptions.Builder(photoFile).build()
+
+        imageCapture.takePicture(
+            outputOptions, ContextCompat.getMainExecutor(mContext), object : ImageCapture.OnImageSavedCallback {
+                override fun onError(exc: ImageCaptureException) {
+                    Log.e(TAG, "Photo capture failed: ${exc.message}", exc)
                 }
 
-                override fun onImageSaved(file: File) {
-                    val msg = "Photo capture succeeded: ${file.absolutePath}"
-                    Log.d("CameraXApp", msg)
-                    viewFinder!!.post {
-                        Toast.makeText(mContext, msg, Toast.LENGTH_SHORT).show()
-                    }
+                override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+                    val savedUri = Uri.fromFile(photoFile)
+                    val msg = "Photo capture succeeded: $savedUri"
+                    Toast.makeText(mContext, msg, Toast.LENGTH_SHORT).show()
+                    Log.d(TAG, msg)
                 }
             })
     }
 
     override fun imageCapture() {
-        val imageCaptureConfig = ImageCaptureConfig.Builder().apply{
-            setCaptureMode(ImageCapture.CaptureMode.MIN_LATENCY)
-        }.build()
-        this.imageCapture = ImageCapture(imageCaptureConfig)
+        imageCapture = ImageCapture.Builder().build()
     }
 
     private fun updateTransform(viewFinder: TextureView){
@@ -180,21 +177,26 @@ abstract class CameraXComponent<B>(): Fragment(), CameraImplementation, Lifecycl
     }
 
     fun flipCamera(){
-        bitLens = !bitLens
-        executor!!.shutdownNow()
-        openCamera()
+//        bitLens = !bitLens
+//        executor!!.shutdownNow()
+//        openCamera()
     }
 
     private fun initializeExecutor() {
-        executor = Executors.newSingleThreadExecutor()
+        cameraExecutor = Executors.newSingleThreadExecutor()
     }
 
-    private fun getCameraOfChoice(): CameraX.LensFacing =
-        if(!bitLens) CameraX.LensFacing.FRONT
-        else CameraX.LensFacing.BACK
+//    private fun getCameraOfChoice(): CameraX.LensFacing =
+//        if(!bitLens) CameraX.LensFacing.FRONT
+//        else CameraX.LensFacing.BACK
 
+    private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all{
+        ContextCompat.checkSelfPermission(this.requireContext(), it) == PackageManager.PERMISSION_GRANTED
+    }
 
-    companion object{
+    companion object {
+        private const val TAG = "CameraXBasic"
+        private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
         private const val REQUEST_CODE_PERMISSIONS = 10
         private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
     }
