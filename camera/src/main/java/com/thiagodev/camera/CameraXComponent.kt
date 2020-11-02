@@ -8,11 +8,9 @@ import android.graphics.Matrix
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
-import android.util.Size
 import android.view.*
 import android.widget.Toast
 import androidx.camera.core.*
-import androidx.camera.core.impl.ImageCaptureConfig.OPTION_FLASH_MODE
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
 import androidx.core.app.ActivityCompat
@@ -39,6 +37,8 @@ abstract class CameraXComponent<B>(): Fragment(), CameraImplementation, Lifecycl
     private var camera: Camera? = null
 
     private var viewFinder: PreviewView? = null
+
+    private var bitLens: Boolean = true
 
     private lateinit var outputDirectory: File
     private lateinit var cameraExecutor: ExecutorService
@@ -97,7 +97,7 @@ abstract class CameraXComponent<B>(): Fragment(), CameraImplementation, Lifecycl
 
             preview = Preview.Builder().build()
 
-            val cameraSelector = CameraSelector.Builder().requireLensFacing(CameraSelector.LENS_FACING_BACK).build()
+            val cameraSelector = CameraSelector.Builder().requireLensFacing(getLensOfChoice()).build()
 
             try {
                 cameraProvider.unbindAll()
@@ -177,18 +177,19 @@ abstract class CameraXComponent<B>(): Fragment(), CameraImplementation, Lifecycl
     }
 
     fun flipCamera(){
-//        bitLens = !bitLens
-//        executor!!.shutdownNow()
-//        openCamera()
+        bitLens = !bitLens
+        // TODO - shutdown executer seems unnecessary
+        cameraExecutor.shutdownNow()
+        openCamera()
     }
 
     private fun initializeExecutor() {
         cameraExecutor = Executors.newSingleThreadExecutor()
     }
 
-//    private fun getCameraOfChoice(): CameraX.LensFacing =
-//        if(!bitLens) CameraX.LensFacing.FRONT
-//        else CameraX.LensFacing.BACK
+    private fun getLensOfChoice(): Int =
+        if(bitLens) CameraSelector.LENS_FACING_BACK
+        else CameraSelector.LENS_FACING_FRONT
 
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all{
         ContextCompat.checkSelfPermission(this.requireContext(), it) == PackageManager.PERMISSION_GRANTED
