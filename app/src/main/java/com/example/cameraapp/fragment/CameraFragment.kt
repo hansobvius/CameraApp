@@ -53,7 +53,11 @@ class CameraFragment: CameraXComponent<FragmentCameraBinding>(), LifecycleOwner 
 
     private fun initCameraActions(){
         binding.apply{
-            captureButton.setOnClickListener { takePicture() }
+            captureButton.setOnClickListener { takePicture {
+                it.let{
+                    viewModel.getFileImage(it, resources.getString(R.string.app_name))
+                }
+            }}
             cameraButton.setOnClickListener{ flipCamera() }
         }
     }

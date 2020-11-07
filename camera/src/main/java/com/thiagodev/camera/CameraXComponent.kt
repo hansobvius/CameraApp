@@ -35,9 +35,7 @@ abstract class CameraXComponent<B>(): Fragment(), CameraImplementation, Lifecycl
     private var imageCapture: ImageCapture? = null
     private var imageAnalyzer: ImageAnalysis? = null
     private var camera: Camera? = null
-
     private var viewFinder: PreviewView? = null
-
     private var bitLens: Boolean = true
 
     private lateinit var outputDirectory: File
@@ -54,18 +52,13 @@ abstract class CameraXComponent<B>(): Fragment(), CameraImplementation, Lifecycl
         return binding.root
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int, permissions: Array<String>, grantResults:
-        IntArray) {
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
             if (allPermissionsGranted()) {
+                Log.i(TAG, "USER CAMERA PERMISSION: ${requestCode}")
                 openCamera()
-            } else {
-                Toast.makeText(this.requireContext(),
-                    "Permissions not granted by the user.",
-                    Toast.LENGTH_SHORT).show()
-                // TODO - resolve finish child operation
-                 this.activity!!.finish()
+            } else{
+                this@CameraXComponent.requireActivity().finish()
             }
         }
     }
@@ -76,9 +69,11 @@ abstract class CameraXComponent<B>(): Fragment(), CameraImplementation, Lifecycl
         this.mContext = context
         this.viewFinder = view
         when{
-            allPermissionsGranted() -> {openCamera()}
-            else -> ActivityCompat.requestPermissions(this@CameraXComponent.activity!!, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS
-            )
+            allPermissionsGranted() -> { openCamera()  }
+            else -> ActivityCompat.requestPermissions(
+                this@CameraXComponent.activity!!,
+                REQUIRED_PERMISSIONS,
+                REQUEST_CODE_PERMISSIONS)
         }
     }
 
@@ -116,9 +111,7 @@ abstract class CameraXComponent<B>(): Fragment(), CameraImplementation, Lifecycl
      * Image Analyzes
      */
     override fun imageAnalyzer() {
-        imageAnalyzer = ImageAnalysis.Builder()
-            .build()
-            .also {
+        imageAnalyzer = ImageAnalysis.Builder().build().also {
                 it.setAnalyzer(cameraExecutor, LuminosityAnalyzer { luma ->
                     Log.d(TAG, "Average luminosity: $luma")
                 })
@@ -128,7 +121,7 @@ abstract class CameraXComponent<B>(): Fragment(), CameraImplementation, Lifecycl
     /**
      * Take picture
      */
-    override fun takePicture(){
+    override fun takePicture(callback: (file: Uri) -> Unit){
         val imageCapture = imageCapture ?: return
 
         val photoFile = File(
@@ -149,6 +142,7 @@ abstract class CameraXComponent<B>(): Fragment(), CameraImplementation, Lifecycl
                     val msg = "Photo capture succeeded: $savedUri"
                     Toast.makeText(mContext, msg, Toast.LENGTH_SHORT).show()
                     Log.d(TAG, msg)
+                    callback(savedUri)
                 }
             })
     }
@@ -157,29 +151,9 @@ abstract class CameraXComponent<B>(): Fragment(), CameraImplementation, Lifecycl
         imageCapture = ImageCapture.Builder().build()
     }
 
-    private fun updateTransform(viewFinder: TextureView){
-        val matrix = Matrix()
-
-        val centerX = viewFinder.width / 2f
-        val centerY = viewFinder.height / 2f
-
-        val rotateDegrees = when(viewFinder.display.rotation){
-            Surface.ROTATION_0 -> 0
-            Surface.ROTATION_90 -> 90
-            Surface.ROTATION_180 -> 180
-            Surface.ROTATION_270 -> 270
-            else -> return
-        }
-
-        matrix.postRotate(-rotateDegrees.toFloat(), centerX, centerY)
-
-        viewFinder.setTransform(matrix)
-    }
-
     fun flipCamera(){
-        bitLens = !bitLens
-        // TODO - shutdown executer seems unnecessary
         cameraExecutor.shutdownNow()
+        bitLens = !bitLens
         openCamera()
     }
 
@@ -196,7 +170,7 @@ abstract class CameraXComponent<B>(): Fragment(), CameraImplementation, Lifecycl
     }
 
     companion object {
-        private const val TAG = "CameraXBasic"
+        private const val TAG = "CameraApp"
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
         private const val REQUEST_CODE_PERMISSIONS = 10
         private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
