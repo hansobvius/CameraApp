@@ -9,6 +9,7 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.example.cameraapp.R
 import com.example.cameraapp.databinding.FragmentCameraBinding
+import com.example.cameraapp.helper.ImageHelper
 import com.example.cameraapp.viewModel.CameraViewModel
 import com.thiagodev.camera.CameraXComponent
 import java.io.File
@@ -43,7 +44,8 @@ class CameraFragment: CameraXComponent<FragmentCameraBinding>(), LifecycleOwner 
         viewModel.viewModelFile.observe(this, Observer {
             it?.let{
                 binding.apply{
-
+                    Log.i("TEST", "Bitmap result: ${it}")
+                    ImageHelper.imageLoader(this.previewBottomImage, it)
                 }
             }
         })
@@ -56,10 +58,10 @@ class CameraFragment: CameraXComponent<FragmentCameraBinding>(), LifecycleOwner 
         }
     }
 
-    fun getOutputDirectory(): File {
-        val mediaDir = this.requireContext().externalMediaDirs.firstOrNull()?.let {
+    private fun getOutputDirectory(): File {
+        val mediaDir = this.requireActivity().externalMediaDirs.firstOrNull()?.let {
             File(it, resources.getString(R.string.app_name)).apply { mkdirs() } }
-        return if (mediaDir != null && mediaDir.exists())
-            mediaDir else this.requireContext().filesDir
+        return if (mediaDir != null && mediaDir.exists()) mediaDir
+        else this.requireContext().filesDir
     }
 }

@@ -65,7 +65,7 @@ abstract class CameraXComponent<B>(): Fragment(), CameraImplementation, Lifecycl
                     "Permissions not granted by the user.",
                     Toast.LENGTH_SHORT).show()
                 // TODO - resolve finish child operation
-                // this.finish()
+                 this.activity!!.finish()
             }
         }
     }
