@@ -10,7 +10,7 @@ class LuminosityAnalyzer(private val listener: LumaListener) : ImageAnalysis.Ana
 
     private var lastAnalyzedTimestamp = 0L
 
-    fun ByteBuffer.toByteArray(): ByteArray{
+    private fun ByteBuffer.toByteArray(): ByteArray{
         rewind()
         val data = ByteArray(remaining())
         get(data)

@@ -25,6 +25,7 @@
                 android:layout_width="75dp"
                 android:layout_height="75dp"
                 android:layout_margin="16dp"
+                android:visibility="gone"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -36,6 +37,7 @@
                 android:layout_width="50dp"
                 android:layout_height="50dp"
                 android:layout_marginStart="22dp"
+                android:visibility="gone"
                 app:layout_constraintBottom_toBottomOf="@+id/capture_button"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="@+id/capture_button" />
@@ -45,6 +47,7 @@
                 android:layout_width="45dp"
                 android:layout_height="45dp"
                 android:layout_margin="22dp"
+                android:visibility="gone"
                 app:layout_constraintBottom_toBottomOf="@+id/capture_button"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="@+id/capture_button"

@@ -1,7 +1,6 @@
 package com.thiagodev.camera
 
 import android.net.Uri
-import java.io.File
 
 interface CameraImplementation {
 

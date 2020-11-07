@@ -1,7 +1,6 @@
 package com.example.cameraapp.helper
 
 import android.app.Activity
-import android.content.Context
 import java.io.File
 
 object FileObject {

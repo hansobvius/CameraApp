@@ -4,11 +4,12 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
-import android.graphics.Matrix
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
-import android.view.*
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Toast
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -27,7 +28,7 @@ import java.util.concurrent.Executors
 typealias LumaListener = (luma: Double) -> Unit
 
 @SuppressLint("RestrictedApi")
-abstract class CameraXComponent<B>(): Fragment(), CameraImplementation, LifecycleOwner
+abstract class CameraXComponent<B> : Fragment(), CameraImplementation, LifecycleOwner
         where B: ViewDataBinding{
 
     private lateinit var mContext: Context

@@ -1,7 +1,6 @@
 package com.example.cameraapp.fragment
 
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import androidx.lifecycle.LifecycleOwner
@@ -27,8 +26,11 @@ class CameraFragment: CameraXComponent<FragmentCameraBinding>(), LifecycleOwner 
 
     override fun onStart(){
         super.onStart()
-        binding.let{ view ->
-            initViewFinder(view.fragmentTextureView, this.requireContext(), getOutputDirectory())
+        binding.apply{
+            initViewFinder(
+                this.fragmentTextureView,
+                this@CameraFragment.requireContext(),
+                getOutputDirectory())
         }
     }
 
@@ -41,10 +43,9 @@ class CameraFragment: CameraXComponent<FragmentCameraBinding>(), LifecycleOwner 
     }
 
     private fun observerEvents(){
-        viewModel.viewModelFile.observe(this, Observer {
+        viewModel.viewModelFile.observe(this, {
             it?.let{
                 binding.apply{
-                    Log.i("TEST", "Bitmap result: ${it}")
                     ImageHelper.imageLoader(this.previewBottomImage, it)
                 }
             }
@@ -53,12 +54,19 @@ class CameraFragment: CameraXComponent<FragmentCameraBinding>(), LifecycleOwner 
 
     private fun initCameraActions(){
         binding.apply{
-            captureButton.setOnClickListener { takePicture {
-                it.let{
-                    viewModel.getFileImage(it, resources.getString(R.string.app_name))
-                }
-            }}
-            cameraButton.setOnClickListener{ flipCamera() }
+            previewBottomImage.visibility = View.VISIBLE
+            cameraButton.apply{
+                visibility = View.VISIBLE
+                setOnClickListener{ flipCamera() }
+            }
+            captureButton.apply {
+                visibility = View.VISIBLE
+                setOnClickListener { takePicture {
+                    it.let{
+                        viewModel.getFileImage(it)
+                    }
+                }}
+            }
         }
     }
 

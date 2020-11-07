@@ -3,10 +3,10 @@ package com.example.cameraapp.camerax
 import android.Manifest
 import android.content.pm.PackageManager
 import android.net.Uri
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
@@ -16,7 +16,6 @@ import kotlinx.android.synthetic.main.activity_camerax.*
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
-import java.util.concurrent.Executor
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -152,7 +151,7 @@ class CameraxActivity : AppCompatActivity() {
     }
 
 
-    fun getOutputDirectory(): File {
+    private fun getOutputDirectory(): File {
         val mediaDir = externalMediaDirs.firstOrNull()?.let {
             File(it, resources.getString(R.string.app_name)).apply { mkdirs() } }
         return if (mediaDir != null && mediaDir.exists())
