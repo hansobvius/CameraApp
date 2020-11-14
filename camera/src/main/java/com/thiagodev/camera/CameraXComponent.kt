@@ -52,15 +52,21 @@ abstract class CameraXComponent<B> : Fragment(), CameraImplementation, Lifecycle
         return binding.root
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+        override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
             if (allPermissionsGranted()) {
-                Log.i(TAG, "USER CAMERA PERMISSION: ${requestCode}")
+                Log.i("TEST", "USER CAMERA PERMISSION: ${requestCode}")
                 openCamera()
             } else{
                 this@CameraXComponent.requireActivity().finish()
             }
         }
+    }
+
+    override fun onStart(){
+        super.onStart()
+        this.initializeExecutor()
     }
 
     @SuppressLint("RestrictedApi")
@@ -69,11 +75,16 @@ abstract class CameraXComponent<B> : Fragment(), CameraImplementation, Lifecycle
         this.mContext = context
         this.viewFinder = view
         when{
-            allPermissionsGranted() -> { openCamera()  }
-            else -> ActivityCompat.requestPermissions(
-                this@CameraXComponent.activity!!,
-                REQUIRED_PERMISSIONS,
-                REQUEST_CODE_PERMISSIONS)
+            allPermissionsGranted() -> {
+                Log.i("TEST", "initViewFinder isAllPermission: ${allPermissionsGranted()}")
+                openCamera()  }
+            else -> {
+                Log.i("TEST", "Permission not granted}")
+                ActivityCompat.requestPermissions(
+                    this@CameraXComponent.activity!!,
+                    REQUIRED_PERMISSIONS,
+                    REQUEST_CODE_PERMISSIONS)
+            }
         }
     }
 
@@ -81,7 +92,6 @@ abstract class CameraXComponent<B> : Fragment(), CameraImplementation, Lifecycle
      * Preview Image
      */
     override fun openCamera(){
-        this.initializeExecutor()
         this.imageCapture()
         this.imageAnalyzer()
 
@@ -153,9 +163,12 @@ abstract class CameraXComponent<B> : Fragment(), CameraImplementation, Lifecycle
     }
 
     fun flipCamera(){
-        cameraExecutor.shutdownNow()
-        bitLens = !bitLens
-        openCamera()
+        cameraExecutor.let{
+            it.shutdownNow()
+            bitLens = !bitLens
+            openCamera()
+        }
+
     }
 
     private fun initializeExecutor() {

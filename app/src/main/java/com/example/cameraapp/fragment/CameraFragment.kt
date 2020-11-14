@@ -74,11 +74,11 @@ class CameraFragment: CameraXComponent<FragmentCameraBinding>(), LifecycleOwner 
                     takePicture(
                         callback = {
                             it.let{
-                                    viewModel.getFileImage(it, updateTransform(binding.fragmentTextureView))
+                                viewModel.getFileImage(it, updateTransform(binding.fragmentTextureView))
                             }
                         },
                         onError ={
-
+                                DialogHelper.showAlert(this@CameraFragment.requireContext(), it.toString())
                         }
                     )
                 }
