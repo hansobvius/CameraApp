@@ -1,6 +1,7 @@
 package com.thiagodev.camera
 
 import android.net.Uri
+import androidx.camera.core.ImageCaptureException
 
 interface CameraImplementation {
 
@@ -10,5 +11,5 @@ interface CameraImplementation {
 
     fun imageAnalyzer()
 
-    fun takePicture(callback: (uri: Uri) -> Unit)
+    fun takePicture(callback: (uri: Uri) -> Unit, onError: (error: ImageCaptureException) -> Unit)
 }

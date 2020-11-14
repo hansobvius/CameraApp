@@ -8,9 +8,11 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.example.cameraapp.R
 import com.example.cameraapp.databinding.FragmentCameraBinding
+import com.example.cameraapp.helper.DialogHelper
 import com.example.cameraapp.helper.ImageHelper
 import com.example.cameraapp.viewModel.CameraViewModel
 import com.thiagodev.camera.CameraXComponent
+import kotlinx.android.synthetic.main.fragment_camera.view.*
 import java.io.File
 
 class CameraFragment: CameraXComponent<FragmentCameraBinding>(), LifecycleOwner {
@@ -43,13 +45,20 @@ class CameraFragment: CameraXComponent<FragmentCameraBinding>(), LifecycleOwner 
     }
 
     private fun observerEvents(){
-        viewModel.viewModelFile.observe(this, {
-            it?.let{
-                binding.apply{
-                    ImageHelper.imageLoader(this.previewBottomImage, it)
+        viewModel.apply{
+            viewModelFile.observe(viewLifecycleOwner, {
+                it?.let{
+                    binding.apply{
+                        ImageHelper.imageLoader(this.previewBottomImage, it)
+                    }
                 }
-            }
-        })
+            })
+            error.observe(viewLifecycleOwner, {
+                it?.let{
+                    DialogHelper.showAlert(this@CameraFragment.requireContext(), it.toString())
+                }
+            })
+        }
     }
 
     private fun initCameraActions(){
@@ -61,11 +70,18 @@ class CameraFragment: CameraXComponent<FragmentCameraBinding>(), LifecycleOwner 
             }
             captureButton.apply {
                 visibility = View.VISIBLE
-                setOnClickListener { takePicture {
-                    it.let{
-                        viewModel.getFileImage(it)
-                    }
-                }}
+                setOnClickListener {
+                    takePicture(
+                        callback = {
+                            it.let{
+                                    viewModel.getFileImage(it, updateTransform(binding.fragmentTextureView))
+                            }
+                        },
+                        onError ={
+
+                        }
+                    )
+                }
             }
         }
     }

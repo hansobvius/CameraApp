@@ -3,7 +3,7 @@ package com.example.cameraapp.helper
 import android.app.Activity
 import java.io.File
 
-object FileObject {
+object FileObjectHelper {
 
     fun createFile(activity: Activity, path: String): File {
         val mediaDir = activity.externalMediaDirs.firstOrNull()?.let {

@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">CameraApp</string>
+    <string name="pdf_alert_button">OK</string>
+    <string name="error_msg">camera exception</string>
 </resources>

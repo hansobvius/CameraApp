@@ -4,12 +4,11 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.Matrix
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.Toast
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
@@ -122,7 +121,7 @@ abstract class CameraXComponent<B> : Fragment(), CameraImplementation, Lifecycle
     /**
      * Take picture
      */
-    override fun takePicture(callback: (file: Uri) -> Unit){
+    override fun takePicture(callback: (file: Uri) -> Unit, onError: (error: ImageCaptureException) -> Unit){
         val imageCapture = imageCapture ?: return
 
         val photoFile = File(
@@ -136,6 +135,7 @@ abstract class CameraXComponent<B> : Fragment(), CameraImplementation, Lifecycle
             outputOptions, ContextCompat.getMainExecutor(mContext), object : ImageCapture.OnImageSavedCallback {
                 override fun onError(exc: ImageCaptureException) {
                     Log.e(TAG, "Photo capture failed: ${exc.message}", exc)
+                    onError(exc)
                 }
 
                 override fun onImageSaved(output: ImageCapture.OutputFileResults) {
@@ -168,6 +168,25 @@ abstract class CameraXComponent<B> : Fragment(), CameraImplementation, Lifecycle
 
     private fun allPermissionsGranted() = REQUIRED_PERMISSIONS.all{
         ContextCompat.checkSelfPermission(this.requireContext(), it) == PackageManager.PERMISSION_GRANTED
+    }
+
+    fun updateTransform(view: PreviewView): Matrix{
+        val matrix = Matrix()
+
+        val centerX = view.width / 2f
+        val centerY = view.height / 2f
+
+        val rotateDegrees = when(view.display.rotation){
+            Surface.ROTATION_0 -> 0
+            Surface.ROTATION_90 -> -90
+            Surface.ROTATION_180 -> -180
+            Surface.ROTATION_270 -> -270
+            else -> null
+        }
+
+        rotateDegrees?.let { rotate -> matrix.postRotate(-90F, centerX, centerY) }
+
+        return matrix
     }
 
     companion object {
