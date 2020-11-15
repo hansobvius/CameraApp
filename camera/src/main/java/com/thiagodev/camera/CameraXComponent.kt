@@ -52,11 +52,9 @@ abstract class CameraXComponent<B> : Fragment(), CameraImplementation, Lifecycle
         return binding.root
     }
 
-        override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
-            super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
             if (allPermissionsGranted()) {
-                Log.i("TEST", "USER CAMERA PERMISSION: ${requestCode}")
                 openCamera()
             } else{
                 this@CameraXComponent.requireActivity().finish()
@@ -69,22 +67,15 @@ abstract class CameraXComponent<B> : Fragment(), CameraImplementation, Lifecycle
         this.initializeExecutor()
     }
 
-    @SuppressLint("RestrictedApi")
     open fun initViewFinder(view: PreviewView, context: Context, file: File){
-        outputDirectory = file
-        this.mContext = context
-        this.viewFinder = view
+        this@CameraXComponent.apply{
+            this.outputDirectory = file
+            this.mContext = context
+            this.viewFinder = view
+        }
         when{
-            allPermissionsGranted() -> {
-                Log.i("TEST", "initViewFinder isAllPermission: ${allPermissionsGranted()}")
-                openCamera()  }
-            else -> {
-                Log.i("TEST", "Permission not granted}")
-                ActivityCompat.requestPermissions(
-                    this@CameraXComponent.activity!!,
-                    REQUIRED_PERMISSIONS,
-                    REQUEST_CODE_PERMISSIONS)
-            }
+            allPermissionsGranted() -> openCamera()
+            else -> requestPermissions(REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
         }
     }
 
