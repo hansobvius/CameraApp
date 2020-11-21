@@ -1,10 +1,10 @@
 package com.example.cameraapp.fragment
 
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.example.cameraapp.R
 import com.example.cameraapp.databinding.FragmentCameraBinding
@@ -12,14 +12,19 @@ import com.example.cameraapp.helper.DialogHelper
 import com.example.cameraapp.helper.ImageHelper
 import com.example.cameraapp.viewModel.CameraViewModel
 import com.thiagodev.camera.CameraXComponent
-import kotlinx.android.synthetic.main.fragment_camera.view.*
 import java.io.File
 
 class CameraFragment: CameraXComponent<FragmentCameraBinding>(), LifecycleOwner {
 
+    private val TAG: String = this@CameraFragment::class.java.name
+
     private lateinit var viewModel: CameraViewModel
 
     override fun getViewBinding() = FragmentCameraBinding.inflate(LayoutInflater.from(this.requireActivity()))
+
+    override fun userPermissionResponse(userAllowed: Boolean){
+        Log.i(TAG, "camera permission allowed: ${userAllowed}")
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

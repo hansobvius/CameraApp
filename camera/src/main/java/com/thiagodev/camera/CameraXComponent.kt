@@ -45,6 +45,8 @@ abstract class CameraXComponent<B> : Fragment(), CameraImplementation, Lifecycle
 
     abstract fun getViewBinding(): B
 
+    abstract fun userPermissionResponse(userAllowed: Boolean)
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         binding = getViewBinding().apply {
             this.lifecycleOwner
@@ -55,9 +57,10 @@ abstract class CameraXComponent<B> : Fragment(), CameraImplementation, Lifecycle
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         if (requestCode == REQUEST_CODE_PERMISSIONS) {
             if (allPermissionsGranted()) {
+                userPermissionResponse(true)
                 openCamera()
             } else{
-                this@CameraXComponent.requireActivity().finish()
+                userPermissionResponse(false)
             }
         }
     }
