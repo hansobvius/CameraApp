@@ -14,6 +14,7 @@ import android.view.TextureView
 import androidx.camera.core.ImageCaptureException
 import androidx.camera.core.impl.utils.Exif
 import androidx.lifecycle.*
+import com.example.cameraapp.helper.ImageHelper
 import kotlinx.coroutines.*
 import java.io.File
 import java.io.IOException
@@ -37,18 +38,14 @@ class CameraViewModel: ViewModel() {
     fun getFileImage(uri: Uri, imageMatrix: Matrix){
         viewModelScope.launch {
             val file = File(uri.path!!)
+            val exif  = Exif.createFromFile(file)
+            val exifOrientation = exif.orientation
+            Log.i("TEST", "exif orientation $exifOrientation")
             file.exists().also {
                 if(it){
                     try{
                         val bitmapValue: Bitmap? = BitmapFactory.decodeFile(uri.path)
-                        val bitmap = createBitmap(
-                            bitmapValue!!,
-                            X_PIXEL,
-                            Y_PIXEL,
-                            bitmapValue.width,
-                            bitmapValue.height,
-                            imageMatrix,
-                            true)
+                        val bitmap = ImageHelper.createBitmap(bitmapValue, imageMatrix)
                         bitmap?.let { btm -> _viewModelFile.value = btm }
                     }catch (e: IOException){
                         _bitmapError.value = IS_BITMAP_ERROR

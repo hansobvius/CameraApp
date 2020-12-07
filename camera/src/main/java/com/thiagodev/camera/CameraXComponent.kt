@@ -13,7 +13,6 @@ import android.widget.Toast
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.Fragment
@@ -177,29 +176,16 @@ abstract class CameraXComponent<B> : Fragment(), CameraImplementation, Lifecycle
         ContextCompat.checkSelfPermission(this.requireContext(), it) == PackageManager.PERMISSION_GRANTED
     }
 
-    fun updateTransform(view: PreviewView): Matrix{
-        val matrix = Matrix()
-
-        val centerX = view.width / 2f
-        val centerY = view.height / 2f
-
-        val rotateDegrees = when(view.display.rotation){
-            Surface.ROTATION_0 -> 0
-            Surface.ROTATION_90 -> -90
-            Surface.ROTATION_180 -> -180
-            Surface.ROTATION_270 -> -270
-            else -> null
+    fun updateTransform(view: PreviewView): Matrix =
+        Matrix().apply {
+            this.postRotate(DEFAULT_IMAGE_ROTATION, (view.width / 2f), (view.height / 2f))
         }
-
-        rotateDegrees?.let { rotate -> matrix.postRotate(-90F, centerX, centerY) }
-
-        return matrix
-    }
 
     companion object {
         private const val TAG = "CameraApp"
         private const val FILENAME_FORMAT = "yyyy-MM-dd-HH-mm-ss-SSS"
         private const val REQUEST_CODE_PERMISSIONS = 10
+        private const val DEFAULT_IMAGE_ROTATION = -90F
         private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
     }
 }
