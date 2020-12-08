@@ -17,6 +17,7 @@ import androidx.core.content.ContextCompat
 import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LifecycleOwner
+import com.thiagodev.camera.components.LuminosityAnalyzer
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*

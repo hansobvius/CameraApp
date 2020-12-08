@@ -1,8 +1,9 @@
-package com.thiagodev.camera
+package com.thiagodev.camera.components
 
 import android.util.Log
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
+import com.thiagodev.camera.LumaListener
 import java.nio.ByteBuffer
 import java.util.concurrent.TimeUnit
 
